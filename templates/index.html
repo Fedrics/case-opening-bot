@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Case Opening Bot</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #1a1a1a);
+            color: var(--tg-theme-text-color, #ffffff);
+            padding: 10px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .balance {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .balance h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .balance-amount {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .cases-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .case-card {
+            background: var(--tg-theme-secondary-bg-color, #2a2a2a);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .case-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--tg-theme-button-color, #5288c1);
+        }
+        
+        .case-card.bronze {
+            background: linear-gradient(135deg, #cd7f32 0%, #8b4513 100%);
+        }
+        
+        .case-card.silver {
+            background: linear-gradient(135deg, #c0c0c0 0%, #708090 100%);
+        }
+        
+        .case-card.gold {
+            background: linear-gradient(135deg, #ffd700 0%, #daa520 100%);
+        }
+        
+        .case-card.diamond {
+            background: linear-gradient(135deg, #b9f2ff 0%, #4169e1 100%);
+        }
+        
+        .case-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .case-price {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .stats {
+            background: var(--tg-theme-secondary-bg-color, #2a2a2a);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stats h3 {
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--tg-theme-button-color, #5288c1);
+        }
+        
+        .recent-openings {
+            background: var(--tg-theme-secondary-bg-color, #2a2a2a);
+            border-radius: 15px;
+            padding: 15px;
+        }
+        
+        .recent-openings h3 {
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .opening-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .opening-item:last-child {
+            border-bottom: none;
+        }
+        
+        .reward-name {
+            font-weight: bold;
+        }
+        
+        .reward-value {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        
+        .rarity-common { color: #9e9e9e; }
+        .rarity-uncommon { color: #4caf50; }
+        .rarity-rare { color: #2196f3; }
+        .rarity-epic { color: #9c27b0; }
+        .rarity-legendary { color: #ff9800; }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid var(--tg-theme-button-color, #5288c1);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .reward-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--tg-theme-bg-color, #1a1a1a);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            border: 3px solid var(--tg-theme-button-color, #5288c1);
+            z-index: 1000;
+            display: none;
+            animation: rewardPop 0.5s ease-out;
+        }
+        
+        @keyframes rewardPop {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        .reward-animation h2 {
+            margin-bottom: 15px;
+            color: var(--tg-theme-button-color, #5288c1);
+        }
+        
+        .reward-animation .reward-name {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .reward-animation .reward-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4caf50;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎁 Case Opening</h1>
+        </div>
+        
+        <div class="balance">
+            <h2>Ваш баланс</h2>
+            <div class="balance-amount" id="balance">{{ "%.0f"|format(user.balance) }} ⭐</div>
+        </div>
+        
+        <div class="cases-grid">
+            {% for case_type, case_data in cases.items() %}
+            <div class="case-card {{ case_type }}" onclick="openCase('{{ case_type }}')">
+                <div class="case-name">{{ case_data.name }}</div>
+                <div class="case-price">{{ "%.0f"|format(case_data.price) }} ⭐</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="stats">
+            <h3>📊 Статистика</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="cases-opened">{{ user.cases_opened }}</div>
+                    <div>Кейсов открыто</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="total-spent">{{ "%.0f"|format(user.total_spent) }}</div>
+                    <div>Потрачено ⭐</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="total-won">{{ "%.0f"|format(user.total_won) }}</div>
+                    <div>Выиграно ⭐</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="profit">{{ "%.0f"|format(user.total_won - user.total_spent) }}</div>
+                    <div>Профит ⭐</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="recent-openings">
+            <h3>🕒 Последние открытия</h3>
+            <div id="recent-openings-list">
+                <!-- Will be loaded via JavaScript -->
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Открываем кейс...</p>
+        </div>
+    </div>
+    
+    <div class="overlay" id="overlay"></div>
+    <div class="reward-animation" id="reward-animation">
+        <h2>🎉 Поздравляем!</h2>
+        <div class="reward-name" id="reward-name"></div>
+        <div class="reward-value" id="reward-value"></div>
+    </div>
+
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        
+        const initData = tg.initData;
+        
+        // Open case function
+        async function openCase(caseType) {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/open_case', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        init_data: initData,
+                        case_type: caseType
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showReward(result.reward);
+                    updateBalance(result.new_balance);
+                    updateStats();
+                    loadRecentOpenings();
+                } else {
+                    tg.showAlert(result.error || 'Произошла ошибка');
+                }
+            } catch (error) {
+                console.error('Error opening case:', error);
+                tg.showAlert('Ошибка при открытии кейса');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        // Show reward animation
+        function showReward(reward) {
+            const overlay = document.getElementById('overlay');
+            const animation = document.getElementById('reward-animation');
+            const rewardName = document.getElementById('reward-name');
+            const rewardValue = document.getElementById('reward-value');
+            
+            rewardName.textContent = reward.name;
+            rewardName.className = `reward-name rarity-${reward.rarity}`;
+            rewardValue.textContent = `+${reward.value} ⭐`;
+            
+            overlay.style.display = 'block';
+            animation.style.display = 'block';
+            
+            // Add haptic feedback
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                animation.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Update balance display
+        function updateBalance(newBalance) {
+            document.getElementById('balance').textContent = `${Math.floor(newBalance)} ⭐`;
+        }
+        
+        // Update stats
+        async function updateStats() {
+            try {
+                const response = await fetch(`/api/user_stats?init_data=${encodeURIComponent(initData)}`);
+                const stats = await response.json();
+                
+                document.getElementById('cases-opened').textContent = stats.cases_opened;
+                document.getElementById('total-spent').textContent = Math.floor(stats.total_spent);
+                document.getElementById('total-won').textContent = Math.floor(stats.total_won);
+                document.getElementById('profit').textContent = Math.floor(stats.profit);
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+        
+        // Load recent openings
+        async function loadRecentOpenings() {
+            try {
+                const response = await fetch(`/api/recent_openings?init_data=${encodeURIComponent(initData)}&limit=5`);
+                const openings = await response.json();
+                
+                const container = document.getElementById('recent-openings-list');
+                container.innerHTML = '';
+                
+                if (openings.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; color: #666;">Пока нет открытых кейсов</div>';
+                    return;
+                }
+                
+                openings.forEach(opening => {
+                    const item = document.createElement('div');
+                    item.className = 'opening-item';
+                    item.innerHTML = `
+                        <div>
+                            <div class="reward-name rarity-${opening.reward_rarity}">${opening.reward_name}</div>
+                            <div style="font-size: 12px; color: #666;">${opening.case_type}</div>
+                        </div>
+                        <div class="reward-value">+${opening.reward_value} ⭐</div>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Error loading recent openings:', error);
+            }
+        }
+        
+        // Close reward animation on click
+        document.getElementById('overlay').addEventListener('click', () => {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('reward-animation').style.display = 'none';
+        });
+        
+        // Load initial data
+        loadRecentOpenings();
+    </script>
+</body>
+</html>
