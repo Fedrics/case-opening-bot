@@ -368,7 +368,13 @@ def run_fastapi():
 async def main():
     """Main function"""
     # Create database tables
-    create_tables()
+    try:
+        from init_db import init_database
+        init_database()
+    except Exception as e:
+        logger.error(f"Database initialization error: {e}")
+        # Fallback to old method
+        create_tables()
     
     # Start FastAPI server in background thread
     fastapi_thread = Thread(target=run_fastapi, daemon=True)

@@ -27,4 +27,4 @@ RUN mkdir -p static templates
 EXPOSE 8000
 
 # Command to run the application
-CMD ["python", "bot.py"]
+CMD ["sh", "-c", "python init_db.py 2>/dev/null || true && python bot.py"]

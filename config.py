@@ -9,7 +9,8 @@ WEB_APP_URL = os.getenv("WEB_APP_URL", "http://localhost:8000")
 CRYPTOBOT_TOKEN = os.getenv("CRYPTOBOT_TOKEN")
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./case_bot.db")
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
-ADMIN_ID = int(os.getenv("ADMIN_ID", "6263683504"))
+# Use BigInteger compatible value
+ADMIN_ID = int(os.getenv("ADMIN_ID", "123456789"))
 
 # Case Configuration
 CASES = {

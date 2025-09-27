@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, JSON, ForeignKey, BigInteger, create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy import create_engine
 from datetime import datetime
 import config
 
@@ -11,7 +10,7 @@ class User(Base):
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True)
-    telegram_id = Column(Integer, unique=True, index=True)
+    telegram_id = Column(BigInteger, unique=True, index=True)
     username = Column(String, nullable=True)
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
@@ -85,7 +84,24 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def create_tables():
     """Create all database tables"""
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("Database tables created successfully!")
+    except Exception as e:
+        print(f"Error creating tables: {e}")
+        # Try to handle integer out of range issue
+        try:
+            with engine.connect() as conn:
+                # Drop and recreate tables if needed
+                conn.execute(text("DROP TABLE IF EXISTS payment_invoices CASCADE;"))
+                conn.execute(text("DROP TABLE IF EXISTS transactions CASCADE;"))  
+                conn.execute(text("DROP TABLE IF EXISTS case_openings CASCADE;"))
+                conn.execute(text("DROP TABLE IF EXISTS users CASCADE;"))
+                conn.commit()
+            Base.metadata.create_all(bind=engine)
+            print("Database tables recreated successfully!")
+        except Exception as e2:
+            print(f"Failed to recreate tables: {e2}")
 
 def get_db():
     """Get database session"""
