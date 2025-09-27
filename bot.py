@@ -90,24 +90,25 @@ async def start_handler(message: types.Message):
 Нажми кнопку ниже, чтобы начать играть!
     """
     
-    await message.answer(welcome_text, reply_markup=keyboard)
+    await message.answer(welcome_text, reply_markup=keyboard, parse_mode="HTML")
 
 @dp.callback_query(lambda c: c.data == "deposit")
 async def deposit_handler(callback_query: types.CallbackQuery):
     """Handle deposit button"""
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="⭐ Telegram Stars", callback_data="deposit_stars"),
-        ],
-        [
-            InlineKeyboardButton(text="₿ Криптовалюта", callback_data="deposit_crypto"),
-        ],
-        [
-            InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_main")
-        ]
-    ])
-    
-    text = """
+    try:
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="⭐ Telegram Stars", callback_data="deposit_stars"),
+            ],
+            [
+                InlineKeyboardButton(text="₿ Криптовалюта", callback_data="deposit_crypto"),
+            ],
+            [
+                InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_main")
+            ]
+        ])
+        
+        text = """
 💰 <b>Пополнение баланса</b>
 
 Выберите способ пополнения:
@@ -121,9 +122,13 @@ async def deposit_handler(callback_query: types.CallbackQuery):
 • USDT, TON, BTC, ETH
 • Минимальная комиссия
 • Обработка до 10 минут
-    """
-    
-    await callback_query.message.edit_text(text, reply_markup=keyboard)
+        """
+        
+        await callback_query.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
+        
+    except Exception as e:
+        logger.error(f"Error in deposit handler: {e}")
+        await callback_query.answer("❌ Произошла ошибка")
 
 @dp.callback_query(lambda c: c.data == "deposit_stars")
 async def deposit_stars_handler(callback_query: types.CallbackQuery):
@@ -382,9 +387,16 @@ async def main():
     
     logger.info("Bot is starting...")
     
+    # Clear any existing webhook
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+        logger.info("Cleared existing webhook")
+    except Exception as e:
+        logger.warning(f"Failed to clear webhook: {e}")
+    
     # Start bot polling
     try:
-        await dp.start_polling(bot)
+        await dp.start_polling(bot, drop_pending_updates=True)
     finally:
         await bot.session.close()
 
