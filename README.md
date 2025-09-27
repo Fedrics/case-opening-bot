@@ -1,4 +1,41 @@
-# Case Opening Telegram Bot 🎁
+# 🎁 Case Opening Telegram Bot
+
+[![Python](https://img.shields.io/badge/python-v3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Telegram Bot API](https://img.shields.io/badge/Telegram%20Bot%20API-Latest-blue)](https://core.telegram.org/bots/api)
+[![Railway](https://img.shields.io/badge/Deployed%20on-Railway-purple)](https://railway.app)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+> **Modern Telegram bot for opening cases with real prizes! WebApp integration, 2025 actual gifts, and balanced economics.**
+
+## ✨ Features
+
+- 🎁 **4 case types** with real prizes from games to tech
+- 🌐 **Modern web interface** via Telegram WebApp  
+- ⭐ **Telegram Stars payments** - official currency
+- 🎮 **2025 actual prizes** - Steam games, consoles, hardware
+- 📊 **Fair system** with transparent probabilities
+- ✨ **Premium UI/UX** with animations and effects
+
+## 🚀 Quick Start
+
+```bash
+# Clone repository
+git clone https://github.com/Fedrics/case-opening-bot.git
+cd case-opening-bot
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set environment variables
+cp .env.example .env
+# Edit .env with your bot token and settings
+
+# Run the bot
+python bot.py
+# Or use start.bat on Windows
+```
+
+## 🎁 Available Cases Telegram Bot 🎁
 
 Современный Telegram бот для открытия кейсов с реальными призами! Интеграция с веб-приложением, актуальные подарки 2025 года и сбалансированная экономика.
 
